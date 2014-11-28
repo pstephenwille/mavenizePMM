@@ -38,8 +38,7 @@ public class BreakPeriodStage extends Stage {
                                 bounds.getWidth(),
                                 bounds.getHeight());
 
-        scene.getStylesheets()
-                .add(App.class.getResource("../main.css").toExternalForm());
+        scene.getStylesheets().add("main.css");
 
         scene.setFill(null);
 

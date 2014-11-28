@@ -93,8 +93,11 @@ public class App extends Application {
 
 
         Scene scene = new Scene(userInputs, 400, 200);
-        scene.getStylesheets()
-            .add(App.class.getResource("../main.css").toExternalForm());
+//        System.out.println(getClass().getResource("../main.css").toExternalForm() );
+//C:/WWW/mavenizePMM/target/classes/main.css
+
+
+        scene.getStylesheets().add("main.css");
 
 
         app.addEventHandler(KeyEvent.KEY_RELEASED, key ->
