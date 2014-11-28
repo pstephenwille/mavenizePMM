@@ -7,15 +7,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="aefb3ff6-4bbf-4733-a473-a5b468bb253d" name="Default" comment="">
-      <change type="DELETED" beforePath="C:\WWW\mavenizePMM\out\artifacts\mavenizePMM\mavenizePMM.html" afterPath="" />
-      <change type="DELETED" beforePath="C:\WWW\mavenizePMM\out\artifacts\mavenizePMM\mavenizePMM.jar" afterPath="" />
-      <change type="DELETED" beforePath="C:\WWW\mavenizePMM\out\artifacts\mavenizePMM\mavenizePMM.jnlp" afterPath="" />
-      <change type="DELETED" beforePath="C:\WWW\mavenizePMM\out\production\mavenizePMM\PomodorrorMM\App.class" afterPath="" />
-      <change type="DELETED" beforePath="C:\WWW\mavenizePMM\out\production\mavenizePMM\PomodorrorMM\BreakPeriodStage.class" afterPath="" />
-      <change type="DELETED" beforePath="C:\WWW\mavenizePMM\out\production\mavenizePMM\PomodorrorMM\SystemTrayIcon.class" afterPath="" />
-      <change type="DELETED" beforePath="C:\WWW\mavenizePMM\out\production\mavenizePMM\main.css" afterPath="" />
-      <change type="DELETED" beforePath="C:\WWW\mavenizePMM\out\test\mavenizePMM\PomodorrorMM\AppTest.class" afterPath="" />
-      <change type="DELETED" beforePath="C:\WWW\mavenizePMM\target\MANIFEST.MF" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="PomodorrorMM.iws" />
