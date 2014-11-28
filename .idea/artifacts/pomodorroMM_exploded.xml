@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" build-on-make="true" name="pomodorroMM_exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/pomodorroMM_exploded</output-path>
+    <root id="root">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="mavenizePMM" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>

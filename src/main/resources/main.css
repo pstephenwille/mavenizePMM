@@ -1,0 +1,21 @@
+.root {
+    -fx-font-size: 22;
+    -fx-font-family: Arial, Helvetica, sans-serif;
+    -fx-text-fill: #FFFFFF;
+    -fx-alignment: center;
+    -fx-background-color: rgba(0, 0, 0, 0.8);
+}
+.label {
+    -fx-text-fill: rgba(255, 255, 255, 0.8);
+}
+.text-field {
+    -fx-max-width: 80px;
+}
+#breakTimerLbl{
+    -fx-text-fill: rgba(255, 255, 255, 1);
+    -fx-font-size: 44
+}
+#instructionTxt {
+    -fx-font-size: 14;
+    -fx-padding: 15px 0 10px 0;
+}
