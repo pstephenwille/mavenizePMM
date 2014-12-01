@@ -28,7 +28,7 @@ public class BreakPeriodStage extends Stage {
 
         /* put the countdown clock on primary monitor */
         if (screen.hashCode() == Screen.getPrimary().hashCode()) {
-            breakTimerLbl.setId("breakTimerLbl");
+            breakTimerLbl.setId("BREAK_TIMER");
             layout.getChildren().addAll(breakTimerLbl);
         }
 
