@@ -1,5 +1,6 @@
 package PomodorrorMM;
 
+import PomodorrorMM.userinterface.Labels;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -15,6 +16,8 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.IOException;
@@ -24,6 +27,9 @@ import java.util.concurrent.TimeUnit;
 
 
 public class App extends Application {
+
+    private static final Logger LOG = LoggerFactory.getLogger(App.class);
+
     static Double opacity = 0.8;
     static List<Screen> allScreens;
     static List<BreakPeriodStage> timeoutStages = new ArrayList<>();
@@ -36,14 +42,6 @@ public class App extends Application {
     static Timeline workPeriodTimeLine;
     static Stage app;
     static Timeline trayTimer;
-    Label minutes02Lbl = new Label();
-    Label setOpacityTo = new Label();
-    Label breakTimerLbl = new Label();
-    Label willWorkFor = new Label();
-    Label instructionTxt;
-    Label percentLbl = new Label();
-    Label breakfor = new Label();
-    Label minutes01Lbl = new Label();
     TextField breakMinutesText = new TextField();
     TextField opacityText = new TextField();
     TextField workMinutesText = new TextField();
@@ -74,27 +72,30 @@ public class App extends Application {
 
         /* position form fields */
         /* row 1*/
-        userInputs.add(willWorkFor, 1, 0);
+        userInputs.add(Labels.DURATION_WORK, 1, 0);
         userInputs.add(workMinutesText, 5, 0);
-        userInputs.add(minutes01Lbl, 6, 0);
+        userInputs.add(Labels.MINUTES_TENS, 6, 0);
 
         /* row 2*/
-        userInputs.add(breakfor, 1, 1);
+        userInputs.add(Labels.DURATION_BREAK, 1, 1);
         userInputs.add(breakMinutesText, 5, 1);
-        userInputs.add(minutes02Lbl, 6, 1);
+        userInputs.add(Labels.MINUTES_ONES, 6, 1);
 
         /* row 3 */
-        userInputs.add(setOpacityTo, 1, 2);
+        userInputs.add(Labels.SET_OPACITY, 1, 2);
         userInputs.add(opacityText, 5, 2);
-        userInputs.add(percentLbl, 6, 2);
+        userInputs.add(Labels.PERCENT, 6, 2);
 
         /* row 4, instruction text */
-        userInputs.add(instructionTxt, 1, 4, 6, 1);
-
+        userInputs.add(Labels.INSTRUCTIONS, 1, 4, 6, 1);
 
         Scene scene = new Scene(userInputs, 400, 200);
-        scene.getStylesheets()
-            .add(App.class.getResource("../main.css").toExternalForm());
+
+        //        System.out.println(getClass().getResource("../main.css").toExternalForm() );
+        //        C:/WWW/mavenizePMM/target/classes/main.css
+
+
+        scene.getStylesheets().add("main.css");
 
 
         app.addEventHandler(KeyEvent.KEY_RELEASED, key ->
@@ -190,43 +191,20 @@ public class App extends Application {
             }
         };
 
-        /* i will work for */
-        willWorkFor.setText("I will work for ");
-
         /* work minutes, input */
         workMinutesText.setText("25");
         workMinutesText.setId("workMinutes");
         workMinutesText.textProperty().addListener(parseField);
-
-        /* minutes */
-        minutes01Lbl.setText(" minutes");
-
-        /*i will break for */
-        breakfor.setText("I will break for ");
 
         /* break minutes, input */
         breakMinutesText.setText("10");
         breakMinutesText.setId("breakMinutes");
         breakMinutesText.textProperty().addListener(parseField);
 
-        /* minutes */
-        minutes02Lbl.setText(" minutes");
-
-        /* set opacity to */
-        setOpacityTo.setText("Set opacity to ");
-
         /* opacity input */
         opacityText.setText("80");
         opacityText.setId("opacity");
         opacityText.textProperty().addListener(parseField);
-
-
-        /* % */
-        percentLbl.setText(" %");
-
-        instructionTxt = new Label("Pres ESCAPE to exit, press ENTER to start.\nDuring the " +
-                "break period, ESCAPE will restart the cycle.");
-        instructionTxt.setId("instructionTxt");
     }
 
 
@@ -241,7 +219,7 @@ public class App extends Application {
 
             allScreens = Screen.getScreens();
             allScreens.forEach(s -> timeoutStages.add(
-                    new BreakPeriodStage(s, opacity, breakTimerLbl)));
+                    new BreakPeriodStage(s, opacity, Labels.BREAK_TIMER)));
 
             timeoutStages.forEach(s -> {
                 s.getStage().getScene().addEventHandler(KeyEvent.KEY_RELEASED, escape -> {
@@ -286,9 +264,8 @@ public class App extends Application {
                         millisText = "0" + millisText;
                     }
 
-                    breakTimerLbl.setText(minutesText + ":" +
-                            secondsText + ":" +
-                            millisText.substring(0, 2));
+                    Labels.updateBreakTimer(minutesText, secondsText, millisText);
+
                     if (timerText <= 0) {
                         timerText = workForMinutes;
                     }
@@ -376,12 +353,15 @@ public class App extends Application {
     }
 
     public void changeColor(String color) {
+
+        LOG.info("changing color of blink-tool to {}", color);
+
         Platform.runLater(() -> {
             try {
                 String[] cmmd = {"cmd", "/c", "cd " + blinkPath + " && blink1-tool " + color};
                 Process p = Runtime.getRuntime().exec(cmmd);
             } catch (IOException e) {
-                System.out.println(e);
+                LOG.error("Problem accessing blink-tool. Exception: {}", e.getMessage());
             }
         });
     }

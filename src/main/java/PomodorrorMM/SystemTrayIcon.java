@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 
 public class SystemTrayIcon extends App {
+
     static PopupMenu popup;
     static SystemTray sysTray;
     static ActionListener listener;
@@ -21,7 +22,6 @@ public class SystemTrayIcon extends App {
     BufferedImage buffTrayIcon;
     WritableImage wim;
     TrayIcon trayIcon = null;
-
 
     public SystemTrayIcon() {
 
