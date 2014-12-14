@@ -36,8 +36,7 @@ public class LabelsTest {
     @Test
     public void instructionsText(){
 
-        assertThat(Labels.INSTRUCTIONS.getText()).isEqualTo("Press ESCAPE to exit, press ENTER to start.\n" +
-                "During the break period, ESCAPE will restart the cycle.");
+        assertThat(Labels.INSTRUCTIONS_HEADER.getText()).isEqualTo("Instructions:");
     }
 
     @Test

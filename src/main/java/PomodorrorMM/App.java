@@ -7,8 +7,8 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
@@ -19,8 +19,6 @@ import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -30,73 +28,53 @@ public class App extends Application {
 
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
+    private static final int MAX_DIGITS_DISPLAYED = 3;
+    private static final int DEFAULT_INSETS = 4;
+    private static final int ROWSPAN_ONE = 1;
+    private static final int COLSPAN_THREE = 3;
+    private static final int COLSPAN_ONE = 1;
+    private static final double TXT_INPUT_MAX_LENGTH = 55;
+    private static final int VIEW_WIDTH = 540;
+    private static final int VIEW_HEIGHT = 340;
+
+    private TextField breakMinutesText = new TextField();
+    private TextField workMinutesText = new TextField();
+    private TextField opacityText = new TextField();
+    private Stage appContainer = new Stage();
+
+    private List<BreakPeriodView> timeoutStages = new ArrayList<>();
+
+    private static Long minutesForBreak = 10L;
+    private static Long minutesForWork = 25L;
     static Double opacity = 0.8;
+
     static List<Screen> allScreens;
-    static List<BreakPeriodStage> timeoutStages = new ArrayList<>();
-    static Long breakForMinutes = 10L;
-    static Long workForMinutes = 25L;
     static Long timerText;
     static Long trayTimerCounter;
     static Timeline displayTimer;
     static Timeline breakPeriodTimeline;
     static Timeline workPeriodTimeLine;
-    static Stage app;
+    private static Stage app;
     static Timeline trayTimer;
-    TextField breakMinutesText = new TextField();
-    TextField opacityText = new TextField();
-    TextField workMinutesText = new TextField();
-    TrayIcon trayIcon = null;
-    Stage appContainer = new Stage();
     String minutesText;
     String secondsText;
     String millisText;
     String trayMinutesText;
     Long trayCycleMillis = 1000L;
     SystemTrayIcon tray;
-    String pauseColor = "--rgb=100,100,00";
-    String onBreakColor = "--rgb=00,100,00";
-    String workingColor = "--rgb=100,00,00";
-    String offColor = "--rgb=00,00,00";
-    String blinkPath = "";
-
 
     public static void main(String[] args) { launch(args); }
-    public void start(Stage app) throws Exception {
-        App.app = app;
 
-        setBlinkPath();
+    public void start(Stage app) throws Exception {
+
+        App.app = app;
 
         makeFormFields();
 
-        GridPane userInputs = new GridPane();
+        GridPane gridPane = initializeGridPane();
 
-        /* position form fields */
-        /* row 1*/
-        userInputs.add(Labels.DURATION_WORK, 1, 0);
-        userInputs.add(workMinutesText, 5, 0);
-        userInputs.add(Labels.MINUTES_TENS, 6, 0);
-
-        /* row 2*/
-        userInputs.add(Labels.DURATION_BREAK, 1, 1);
-        userInputs.add(breakMinutesText, 5, 1);
-        userInputs.add(Labels.MINUTES_ONES, 6, 1);
-
-        /* row 3 */
-        userInputs.add(Labels.SET_OPACITY, 1, 2);
-        userInputs.add(opacityText, 5, 2);
-        userInputs.add(Labels.PERCENT, 6, 2);
-
-        /* row 4, instruction text */
-        userInputs.add(Labels.INSTRUCTIONS, 1, 4, 6, 1);
-
-        Scene scene = new Scene(userInputs, 400, 200);
-
-        //        System.out.println(getClass().getResource("../main.css").toExternalForm() );
-        //        C:/WWW/mavenizePMM/target/classes/main.css
-
-
+        Scene scene = new Scene(gridPane, VIEW_WIDTH, VIEW_HEIGHT);
         scene.getStylesheets().add("main.css");
-
 
         app.addEventHandler(KeyEvent.KEY_RELEASED, key ->
         {
@@ -114,21 +92,23 @@ public class App extends Application {
 
 
             if (code.equals("enter")) {
-                /* user has submitted the form, set the values and,
-                * start the app */
 
                 /* stop to reset values */
-                if (timeoutStages.size() > 0) pauseApp();
+                if (timeoutStages.size() > 0) {
+
+                    pauseApp();
+                }
 
                 /* if not already milliseconds */
-                if (workForMinutes.toString().length() < 4) {
-                    workForMinutes *= 60L * 1000L;
+                if (minutesForWork.toString().length() < 4) {
+                    minutesForWork *= 60L * 1000L;
                 }
-                if (breakForMinutes.toString().length() < 4) {
-                    breakForMinutes *= 60L * 1000L;
+
+                if (minutesForBreak.toString().length() < 4) {
+                    minutesForBreak *= 60L * 1000L;
                 }
-                timerText = breakForMinutes;
-                trayTimerCounter = workForMinutes;
+                timerText = minutesForBreak;
+                trayTimerCounter = minutesForWork;
 
                 if (timeoutStages.size() > 0) {
                     /* reset countdown clock opacity */
@@ -149,29 +129,66 @@ public class App extends Application {
             }
         });
 
-
         app.setTitle("Pomodoro - multi monitor");
         app.setScene(scene);
         app.initStyle(StageStyle.UTILITY);
         app.show();
     }
 
+    // Layout GridPane (add inputs/labels and their lengths/widths)
+    private GridPane initializeGridPane() {
+
+        GridPane gridPane = new GridPane();
+
+        gridPane.setVgap(DEFAULT_INSETS);
+        gridPane.setHgap(DEFAULT_INSETS);
+        gridPane.setPadding(
+                new Insets(DEFAULT_INSETS, DEFAULT_INSETS, DEFAULT_INSETS, DEFAULT_INSETS)
+        );
+
+        /* position form fields */
+        /* row 0 */
+        gridPane.add(Labels.DURATION_WORK, 0, 1);
+        workMinutesText.setMaxWidth(TXT_INPUT_MAX_LENGTH);
+        gridPane.add(workMinutesText, 1, 1, COLSPAN_ONE, ROWSPAN_ONE);
+        gridPane.add(Labels.MINUTES_TENS, 2, 1);
+
+        /* row 1 */
+        gridPane.add(Labels.DURATION_BREAK, 0, 2);
+        breakMinutesText.setMaxWidth(TXT_INPUT_MAX_LENGTH);
+        gridPane.add(breakMinutesText, 1, 2, COLSPAN_ONE, ROWSPAN_ONE);
+        gridPane.add(Labels.MINUTES_ONES, 2, 2);
+
+        /* row 2 */
+        gridPane.add(Labels.SET_OPACITY, 0, 3);
+        opacityText.setMaxWidth(TXT_INPUT_MAX_LENGTH);
+        gridPane.add(opacityText, 1, 3, COLSPAN_ONE, ROWSPAN_ONE);
+        gridPane.add(Labels.PERCENT, 2, 3);
+
+        /* row 3 */
+        gridPane.add(Labels.INSTRUCTIONS_HEADER, 0, 4, COLSPAN_THREE, ROWSPAN_ONE);
+        gridPane.add(Labels.INSTRUCTIONS_BODY, 0, 5, COLSPAN_THREE, ROWSPAN_ONE);
+        return gridPane;
+    }
+
     public void makeFormFields() {
+
         ChangeListener parseField = (observable, oldValue, newValue) -> {
+
             /* parse fieldID form event string */
             String fieldID = observable.toString().split(" ")[2].split("=")[1].replace(",", "");
 
             String _digits = newValue.toString().replaceAll("\\D+", "");
 
             /* limit to 3 digits */
-            _digits = (_digits.length() > 3) ? _digits.substring(0, 3) : _digits;
+            _digits = (_digits.length() > MAX_DIGITS_DISPLAYED) ? _digits.substring(0, MAX_DIGITS_DISPLAYED) : _digits;
 
             if (_digits.length() > 0) {
                 if (fieldID.equals("workMinutes")) {
-                    workForMinutes = Long.parseLong(_digits);
+                    minutesForWork = Long.parseLong(_digits);
                 }
                 if (fieldID.equals("breakMinutes")) {
-                    breakForMinutes = Long.parseLong(_digits);
+                    minutesForBreak = Long.parseLong(_digits);
                 }
                 if (fieldID.equals("opacity")) {
                     opacity = Double.parseDouble(_digits) / 100.00;
@@ -210,7 +227,7 @@ public class App extends Application {
 
     public void makeSysTrayIcon() {
         if (tray == null) {
-            tray = new SystemTrayIcon();
+            tray = new SystemTrayIcon(this);
         }
     }
 
@@ -219,7 +236,7 @@ public class App extends Application {
 
             allScreens = Screen.getScreens();
             allScreens.forEach(s -> timeoutStages.add(
-                    new BreakPeriodStage(s, opacity, Labels.BREAK_TIMER)));
+                    new BreakPeriodView(s, opacity, Labels.BREAK_TIMER)));
 
             timeoutStages.forEach(s -> {
                 s.getStage().getScene().addEventHandler(KeyEvent.KEY_RELEASED, escape -> {
@@ -234,11 +251,11 @@ public class App extends Application {
 
     public void makeTimers() {
         /* show break stages */
-        breakPeriodTimeline = new Timeline(new KeyFrame(Duration.millis(breakForMinutes),
+        breakPeriodTimeline = new Timeline(new KeyFrame(Duration.millis(minutesForBreak),
                 even -> hideBreakPeriodStages()));
 
         /* hide break stages */
-        workPeriodTimeLine = new Timeline(new KeyFrame(Duration.millis(workForMinutes),
+        workPeriodTimeLine = new Timeline(new KeyFrame(Duration.millis(minutesForWork),
                 event -> showBreakPeriodStages()));
 
         /* update count down clock */
@@ -267,7 +284,7 @@ public class App extends Application {
                     Labels.updateBreakTimer(minutesText, secondsText, millisText);
 
                     if (timerText <= 0) {
-                        timerText = workForMinutes;
+                        timerText = minutesForWork;
                     }
                 }));
         displayTimer.setCycleCount(Timeline.INDEFINITE);
@@ -291,21 +308,23 @@ public class App extends Application {
 
     /* work period */
     public void hideBreakPeriodStages() {
-        changeColor(workingColor);
+
+        Blink1ToolCommand.changeColorToWorking();
 
         timeoutStages.forEach(s -> s.getStage().hide());
         displayTimer.pause();
 
         Integer _minutes = Integer.parseInt(workMinutesText.getText()) - 1;
         updateTrayDigits(_minutes.toString());
-        trayTimerCounter = workForMinutes;
+        trayTimerCounter = minutesForWork;
         trayTimer.playFromStart();
         workPeriodTimeLine.playFromStart();
     }
 
     /* break period */
     public void showBreakPeriodStages() {
-        changeColor(onBreakColor);
+
+        Blink1ToolCommand.changeColorToBreak();
 
         updateTrayDigits("00");
         trayTimer.pause();
@@ -316,15 +335,34 @@ public class App extends Application {
         Platform.runLater(() -> timeoutStages.get(0).getStage().requestFocus());
 
         /* reset timer */
-        timerText = breakForMinutes;
+        timerText = minutesForBreak;
         displayTimer.playFromStart();
 
         breakPeriodTimeline.playFromStart();
-
         appContainer.toFront();
     }
 
-    public void restartApp() {
+    public void setMinWidth(double width){
+        app.setMinWidth(width);
+    }
+
+    public void setMinHeight(int height){
+        app.setMinHeight(height);
+    }
+
+    public void setOpacity(double opacity){
+        app.setOpacity(opacity);
+    }
+
+    public void requestFocus(){
+        app.requestFocus();
+    }
+
+    public void close(){
+        app.close();
+    }
+
+    public static void restartApp() {
         trayTimer.play();
         workPeriodTimeLine.play();
     }
@@ -343,27 +381,11 @@ public class App extends Application {
         tray.trayIcon.setImage(tray.buffTrayIcon);
     }
 
-    public void setBlinkPath() {
-        String[] path = System.getenv("PATH").split(";");
-        for (int i = 0; i < path.length; i++) {
-            if (path[i].matches("(?i:.*blink1-tool.*)")) {
-                blinkPath = path[i];
-            }
-        }
-    }
-
-    public void changeColor(String color) {
-
-        LOG.info("changing color of blink-tool to {}", color);
-
-        Platform.runLater(() -> {
-            try {
-                String[] cmmd = {"cmd", "/c", "cd " + blinkPath + " && blink1-tool " + color};
-                Process p = Runtime.getRuntime().exec(cmmd);
-            } catch (IOException e) {
-                LOG.error("Problem accessing blink-tool. Exception: {}", e.getMessage());
-            }
-        });
+    public void shutDown() {
+        timeoutStages.forEach(s -> s.getStage().close());
+        Blink1ToolCommand.turnOffLight();
+        app.close();
+        System.exit(0);
     }
 }
 

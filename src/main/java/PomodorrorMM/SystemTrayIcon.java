@@ -8,26 +8,32 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 
-public class SystemTrayIcon extends App {
+public class SystemTrayIcon {
+
+    private static final int MIN_VIEW_WIDTH = 400;
+    private static final int MIN_VIEW_HEIGHT = 200;
+    private static final double DEFAULT_OPACITY = 1.0;
 
     static PopupMenu popup;
     static SystemTray sysTray;
     static ActionListener listener;
     static String command;
+
     Label trayDigits;
     Scene trayScene;
     BufferedImage buffTrayIcon;
     WritableImage wim;
     TrayIcon trayIcon = null;
 
-    public SystemTrayIcon() {
+    public SystemTrayIcon(App app) {
 
         if (SystemTray.isSupported() && sysTray == null) {
-            sysTray = SystemTray.getSystemTray();
 
+            sysTray = SystemTray.getSystemTray();
             Double width = sysTray.getTrayIconSize().getWidth();
             Double height = sysTray.getTrayIconSize().getHeight();
             wim = new WritableImage(width.intValue(), height.intValue());
@@ -35,7 +41,6 @@ public class SystemTrayIcon extends App {
             StackPane trayPane = new StackPane();
             trayPane.setMinWidth(width);
             trayPane.setMinHeight(height);
-
 
             trayPane.setStyle("-fx-background-color: #000000;");
             trayPane.setOpacity(0.8);
@@ -52,37 +57,36 @@ public class SystemTrayIcon extends App {
             SwingFXUtils.fromFXImage(trayScene.snapshot(wim), buffTrayIcon);
 
             /* tray popup events */
-            listener = e ->
+            listener = (ActionEvent e) ->
             {
                 command = e.getActionCommand().toLowerCase();
+
                 if (command.equals("pause")) {
+
                     Platform.runLater(() -> {
-                        changeColor(pauseColor);
-                        pauseApp();
+
+                        Blink1ToolCommand.changeColorToBreak();
+                        app.pauseApp();
+
                     });/*fx thread */
                 }
                 if (command.equals("restart")) {
-                    changeColor(workingColor);
 
-                    Platform.runLater(() -> restartApp());
+                    Blink1ToolCommand.changeColorToWorking();
+                    Platform.runLater(App::restartApp);
                 }
                 if (command.equals("reset")) {
                     Platform.runLater(() -> {
-                        app.setMinWidth(400);
-                        app.setMinHeight(200);
-                        app.setOpacity(1.0);
+                        app.setMinWidth(MIN_VIEW_WIDTH);
+                        app.setMinHeight(MIN_VIEW_HEIGHT);
+                        app.setOpacity(DEFAULT_OPACITY);
                         app.requestFocus();
                     });
                 }
                 if (command.equals("exit")) {
                     sysTray.remove(trayIcon);/* awt thread */
 
-                    Platform.runLater(() -> {/* fx thread */
-                        timeoutStages.forEach(s -> s.getStage().close());
-                        changeColor(offColor);
-
-                        app.close();
-                    });
+                    Platform.runLater(app::shutDown);
                 }
             };
 

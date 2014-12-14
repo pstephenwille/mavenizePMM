@@ -12,16 +12,14 @@ import javafx.stage.StageStyle;
 /**
  * Created by stephen on 8/24/2014.
  */
-public class BreakPeriodStage extends Stage {
+public class BreakPeriodView extends Stage {
 
     Stage stage;
     StackPane layout;
 
+    public BreakPeriodView(final Screen screen, Double opacity, Label breakTimerLbl) {
 
-    public BreakPeriodStage(final Screen screen, Double opacity, Label breakTimerLbl) {
-
-        setStage(new Stage());
-
+        stage = new Stage();
         layout = new StackPane();
 
         Rectangle2D bounds = screen.getBounds();
@@ -51,12 +49,6 @@ public class BreakPeriodStage extends Stage {
         stage.toFront();
     }
 
-
-
     public Stage getStage() {return this.stage;}
-    public void setStage(Stage stage) {this.stage = stage;}
-
-
     public StackPane getLayout() { return layout; }
-    public void setLayout(StackPane layout) { this.layout = layout; }
 }
