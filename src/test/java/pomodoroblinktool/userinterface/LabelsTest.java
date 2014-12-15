@@ -1,7 +1,6 @@
-package PomodorrorMM.userinterface;
+package pomodoroblinktool.userinterface;
 
 import de.saxsys.javafx.test.JfxRunner;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -9,11 +8,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JfxRunner.class)
 public class LabelsTest {
-
-    @Before
-    public void setUp(){
-
-    }
 
     @Test
     public void breakTimerText(){

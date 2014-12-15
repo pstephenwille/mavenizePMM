@@ -1,12 +1,11 @@
-package PomodorrorMM;
+package pomodoroblinktool;
 
-import PomodorrorMM.userinterface.Labels;
+import pomodoroblinktool.userinterface.Labels;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
@@ -18,6 +17,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pomodoroblinktool.userinterface.SystemTrayIcon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,37 +37,49 @@ public class App extends Application {
     private static final int VIEW_WIDTH = 540;
     private static final int VIEW_HEIGHT = 340;
 
-    private TextField breakMinutesText = new TextField();
-    private TextField workMinutesText = new TextField();
-    private TextField opacityText = new TextField();
-    private Stage appContainer = new Stage();
+    private TextField breakMinutesText;
+    private TextField workMinutesText;
+    private TextField opacityText;
 
-    private List<BreakPeriodView> timeoutStages = new ArrayList<>();
+    private  Long minutesForBreak = 10L;
+    private  Long minutesForWork = 25L;
+    private  Double opacity = 0.8;
 
-    private static Long minutesForBreak = 10L;
-    private static Long minutesForWork = 25L;
-    static Double opacity = 0.8;
+    private Stage appContainer;
+    private SystemTrayIcon tray;
 
-    static List<Screen> allScreens;
-    static Long timerText;
-    static Long trayTimerCounter;
-    static Timeline displayTimer;
-    static Timeline breakPeriodTimeline;
-    static Timeline workPeriodTimeLine;
-    private static Stage app;
+    private List<BreakPeriodView> timeoutStages;
+
+    private Long timerText;
+    private Long trayTimerCounter;
+    private Timeline displayTimer;
+    private Timeline breakPeriod;
+    private static Timeline workPeriod;
+
     static Timeline trayTimer;
     String minutesText;
     String secondsText;
     String millisText;
     String trayMinutesText;
     Long trayCycleMillis = 1000L;
-    SystemTrayIcon tray;
+
+    private Stage stage;
+
+    public App(){
+
+        appContainer = new Stage();
+        tray = new SystemTrayIcon(this);
+        timeoutStages = new ArrayList<>();
+        breakMinutesText = new TextField();
+        workMinutesText = new TextField();
+        opacityText = new TextField();
+    }
 
     public static void main(String[] args) { launch(args); }
 
-    public void start(Stage app) throws Exception {
+    public void start(Stage stage) throws Exception {
 
-        App.app = app;
+        this.stage = stage;
 
         makeFormFields();
 
@@ -76,17 +88,17 @@ public class App extends Application {
         Scene scene = new Scene(gridPane, VIEW_WIDTH, VIEW_HEIGHT);
         scene.getStylesheets().add("main.css");
 
-        app.addEventHandler(KeyEvent.KEY_RELEASED, key ->
+        stage.addEventHandler(KeyEvent.KEY_RELEASED, key ->
         {
             String code = key.getCode().toString().toLowerCase();
 
             if (code.equals("escape") || code.equals("esc")) {
                 if (timeoutStages.size() == 0) {
-                    app.close();
+                    stage.close();
                 } else {
-                    app.setMaxWidth(0.0);
-                    app.setMaxHeight(0.0);
-                    app.setOpacity(0.0);
+                    stage.setMaxWidth(0.0);
+                    stage.setMaxHeight(0.0);
+                    stage.setOpacity(0.0);
                 }
             }
 
@@ -117,22 +129,21 @@ public class App extends Application {
                                 .setStyle("-fx-background-color: rgba(0, 0, 0," + opacity + ")");
                     });
                 }
-                /* leave app container running, to give the stages something to run in. */
-                app.setMaxWidth(0.0);
-                app.setMaxHeight(0.0);
-                app.setOpacity(0.0);
+                /* leave stage container running, to give the stages something to run in. */
+                stage.setMaxWidth(0.0);
+                stage.setMaxHeight(0.0);
+                stage.setOpacity(0.0);
 
-                makeSysTrayIcon();
                 makeBreakScreens();
                 makeTimers();
                 hideBreakPeriodStages();
             }
         });
 
-        app.setTitle("Pomodoro - multi monitor");
-        app.setScene(scene);
-        app.initStyle(StageStyle.UTILITY);
-        app.show();
+        stage.setTitle("Pomodoro - multi monitor");
+        stage.setScene(scene);
+        stage.initStyle(StageStyle.UTILITY);
+        stage.show();
     }
 
     // Layout GridPane (add inputs/labels and their lengths/widths)
@@ -171,40 +182,41 @@ public class App extends Application {
         return gridPane;
     }
 
-    public void makeFormFields() {
+    private void makeFormFields() {
 
         ChangeListener parseField = (observable, oldValue, newValue) -> {
 
             /* parse fieldID form event string */
             String fieldID = observable.toString().split(" ")[2].split("=")[1].replace(",", "");
 
-            String _digits = newValue.toString().replaceAll("\\D+", "");
+            String inputValue = newValue.toString().replaceAll("\\D+", "");
 
             /* limit to 3 digits */
-            _digits = (_digits.length() > MAX_DIGITS_DISPLAYED) ? _digits.substring(0, MAX_DIGITS_DISPLAYED) : _digits;
+            inputValue = inputValue.length() > MAX_DIGITS_DISPLAYED ? inputValue.substring(0, MAX_DIGITS_DISPLAYED) : inputValue;
 
-            if (_digits.length() > 0) {
+            if (inputValue.length() > 0) {
                 if (fieldID.equals("workMinutes")) {
-                    minutesForWork = Long.parseLong(_digits);
+                    minutesForWork = Long.parseLong(inputValue);
                 }
                 if (fieldID.equals("breakMinutes")) {
-                    minutesForBreak = Long.parseLong(_digits);
+                    minutesForBreak = Long.parseLong(inputValue);
                 }
                 if (fieldID.equals("opacity")) {
-                    opacity = Double.parseDouble(_digits) / 100.00;
+                    opacity = Double.parseDouble(inputValue) / 100.00;
                 }
             } else {
-                _digits = "";
+                LOG.warn("No input field found.");
+                inputValue = "not-found";
             }
 
             if (fieldID.equals("workMinutes")) {
-                workMinutesText.setText(_digits);
+                workMinutesText.setText(inputValue);
             }
             if (fieldID.equals("breakMinutes")) {
-                breakMinutesText.setText(_digits);
+                breakMinutesText.setText(inputValue);
             }
             if (fieldID.equals("opacity")) {
-                opacityText.setText(_digits);
+                opacityText.setText(inputValue);
             }
         };
 
@@ -224,38 +236,30 @@ public class App extends Application {
         opacityText.textProperty().addListener(parseField);
     }
 
-
-    public void makeSysTrayIcon() {
-        if (tray == null) {
-            tray = new SystemTrayIcon(this);
-        }
-    }
-
     public void makeBreakScreens() {
         if (timeoutStages.size() == 0) {
 
-            allScreens = Screen.getScreens();
+            List<Screen> allScreens = Screen.getScreens();
             allScreens.forEach(s -> timeoutStages.add(
                     new BreakPeriodView(s, opacity, Labels.BREAK_TIMER)));
 
-            timeoutStages.forEach(s -> {
-                s.getStage().getScene().addEventHandler(KeyEvent.KEY_RELEASED, escape -> {
-                    String key = escape.getCode().toString().toLowerCase();
-                    if (key.equals("escape") || key.equals("esc")) {
-                        hideBreakPeriodStages();
-                    }
-                });
-            });
+            timeoutStages.forEach(timeoutStage ->
+                    timeoutStage.getStage().getScene().addEventHandler(KeyEvent.KEY_RELEASED, keyPressed -> {
+                        String key = keyPressed.getCode().toString().toLowerCase();
+                        if (key.equals("escape") || key.equals("esc")) {
+                            hideBreakPeriodStages();
+                        }
+            }));
         }
     }
 
     public void makeTimers() {
         /* show break stages */
-        breakPeriodTimeline = new Timeline(new KeyFrame(Duration.millis(minutesForBreak),
-                even -> hideBreakPeriodStages()));
+        breakPeriod = new Timeline(new KeyFrame(Duration.millis(minutesForBreak),
+                event -> hideBreakPeriodStages()));
 
         /* hide break stages */
-        workPeriodTimeLine = new Timeline(new KeyFrame(Duration.millis(minutesForWork),
+        workPeriod = new Timeline(new KeyFrame(Duration.millis(minutesForWork),
                 event -> showBreakPeriodStages()));
 
         /* update count down clock */
@@ -314,11 +318,11 @@ public class App extends Application {
         timeoutStages.forEach(s -> s.getStage().hide());
         displayTimer.pause();
 
-        Integer _minutes = Integer.parseInt(workMinutesText.getText()) - 1;
-        updateTrayDigits(_minutes.toString());
+        Integer minutes = Integer.parseInt(workMinutesText.getText()) - 1;
+        updateTrayDigits(minutes.toString());
         trayTimerCounter = minutesForWork;
         trayTimer.playFromStart();
-        workPeriodTimeLine.playFromStart();
+        workPeriod.playFromStart();
     }
 
     /* break period */
@@ -336,56 +340,49 @@ public class App extends Application {
 
         /* reset timer */
         timerText = minutesForBreak;
-        displayTimer.playFromStart();
 
-        breakPeriodTimeline.playFromStart();
+        displayTimer.playFromStart();
+        breakPeriod.playFromStart();
+
         appContainer.toFront();
     }
 
     public void setMinWidth(double width){
-        app.setMinWidth(width);
+        stage.setMinWidth(width);
     }
-
     public void setMinHeight(int height){
-        app.setMinHeight(height);
+        stage.setMinHeight(height);
     }
-
     public void setOpacity(double opacity){
-        app.setOpacity(opacity);
+        stage.setOpacity(opacity);
     }
-
     public void requestFocus(){
-        app.requestFocus();
+        stage.requestFocus();
     }
 
     public void close(){
-        app.close();
+        stage.close();
     }
 
     public static void restartApp() {
         trayTimer.play();
-        workPeriodTimeLine.play();
+        workPeriod.play();
     }
 
     public void pauseApp() {
-        workPeriodTimeLine.pause();
+        workPeriod.pause();
         trayTimer.pause();
-    }
-
-    public void updateTrayDigits(String minutes) {
-        tray.trayDigits.setText(minutes);
-        /* remake image */
-        SwingFXUtils.fromFXImage(tray.trayScene.snapshot(tray.wim), tray.buffTrayIcon);
-
-        /* awt update trayIcon */
-        tray.trayIcon.setImage(tray.buffTrayIcon);
     }
 
     public void shutDown() {
         timeoutStages.forEach(s -> s.getStage().close());
         Blink1ToolCommand.turnOffLight();
-        app.close();
+        stage.close();
         System.exit(0);
+    }
+
+    public void updateTrayDigits(String minutes) {
+        tray.updateDisplay(minutes);
     }
 }
 

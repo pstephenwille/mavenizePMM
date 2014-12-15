@@ -1,4 +1,4 @@
-package PomodorrorMM.userinterface;
+package pomodoroblinktool.userinterface;
 
 import javafx.scene.control.Label;
 

@@ -1,4 +1,4 @@
-package PomodorrorMM;
+package pomodoroblinktool.userinterface;
 
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
@@ -6,6 +6,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import pomodoroblinktool.App;
+import pomodoroblinktool.Blink1ToolCommand;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -14,20 +18,23 @@ import java.awt.image.BufferedImage;
 
 public class SystemTrayIcon {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SystemTrayIcon.class);
+
     private static final int MIN_VIEW_WIDTH = 400;
     private static final int MIN_VIEW_HEIGHT = 200;
     private static final double DEFAULT_OPACITY = 1.0;
 
-    static PopupMenu popup;
-    static SystemTray sysTray;
-    static ActionListener listener;
-    static String command;
+    private static final String MENU_ITEM_TXT_PAUSE = "Pause";
+    private static final String MENU_ITEM_TXT_RESUME = "Resume";
+    private static final String MENU_ITEM_TXT_RESET = "Reset";
+    private static final String MENU_ITEM_TXT_EXIT = "Exit";
 
-    Label trayDigits;
-    Scene trayScene;
-    BufferedImage buffTrayIcon;
-    WritableImage wim;
-    TrayIcon trayIcon = null;
+    private SystemTray sysTray;
+    private Label trayDigits;
+    private Scene trayScene;
+    private BufferedImage buffTrayIcon;
+    private WritableImage wim;
+    private TrayIcon trayIcon;
 
     public SystemTrayIcon(App app) {
 
@@ -42,12 +49,12 @@ public class SystemTrayIcon {
             trayPane.setMinWidth(width);
             trayPane.setMinHeight(height);
 
-            trayPane.setStyle("-fx-background-color: #000000;");
-            trayPane.setOpacity(0.8);
+            trayPane.setStyle(Styles.SYSTEM_TRAY_BACKGROUND_COLOR);
+            trayPane.setOpacity(Styles.SYSTEM_TRAY_OPACITY);
 
             trayDigits = new Label();
-            trayDigits.setStyle("-fx-text-fill: #FFFFFF; -fx-font-size: 12px; ");
-            trayDigits.setOpacity(1);
+            trayDigits.setStyle(Styles.SYSTEM_TRAY_FONT_FILL);
+            trayDigits.setOpacity(Styles.SYSTEM_TRAY_FONT_OPACITY);
 
             trayPane.getChildren().addAll(trayDigits);
             trayScene = new Scene(trayPane, null);
@@ -57,9 +64,10 @@ public class SystemTrayIcon {
             SwingFXUtils.fromFXImage(trayScene.snapshot(wim), buffTrayIcon);
 
             /* tray popup events */
-            listener = (ActionEvent e) ->
+            ActionListener listener = (ActionEvent event) ->
             {
-                command = e.getActionCommand().toLowerCase();
+
+                String command = event.getActionCommand().toLowerCase();
 
                 if (command.equals("pause")) {
 
@@ -75,14 +83,15 @@ public class SystemTrayIcon {
                     Blink1ToolCommand.changeColorToWorking();
                     Platform.runLater(App::restartApp);
                 }
-                if (command.equals("reset")) {
-                    Platform.runLater(() -> {
-                        app.setMinWidth(MIN_VIEW_WIDTH);
-                        app.setMinHeight(MIN_VIEW_HEIGHT);
-                        app.setOpacity(DEFAULT_OPACITY);
-                        app.requestFocus();
-                    });
-                }
+                if (command.equals("reset")) Platform.runLater(() -> {
+
+                    Blink1ToolCommand.turnOffLight();
+                    app.setMinWidth(MIN_VIEW_WIDTH);
+                    app.setMinHeight(MIN_VIEW_HEIGHT);
+                    app.setOpacity(DEFAULT_OPACITY);
+                    app.requestFocus();
+
+                });
                 if (command.equals("exit")) {
                     sysTray.remove(trayIcon);/* awt thread */
 
@@ -90,20 +99,20 @@ public class SystemTrayIcon {
                 }
             };
 
-            MenuItem pause = new MenuItem("Pause");
+            MenuItem pause = new MenuItem(MENU_ITEM_TXT_PAUSE);
             pause.addActionListener(listener);
 
-            MenuItem restart = new MenuItem("Restart");
+            MenuItem restart = new MenuItem(MENU_ITEM_TXT_RESUME);
             restart.addActionListener(listener);
 
-            MenuItem reset = new MenuItem("Reset");
+            MenuItem reset = new MenuItem(MENU_ITEM_TXT_RESET);
             reset.addActionListener(listener);
 
-            MenuItem exit = new MenuItem("Exit");
+            MenuItem exit = new MenuItem(MENU_ITEM_TXT_EXIT);
             exit.addActionListener(listener);
 
             /* add tray menu options */
-            popup = new PopupMenu();
+            PopupMenu popup = new PopupMenu();
             popup.add(pause);
             popup.addSeparator();
             popup.add(restart);
@@ -116,10 +125,25 @@ public class SystemTrayIcon {
             trayIcon.addActionListener(listener);
 
             try {
+
                 sysTray.add(trayIcon);
-            } catch (AWTException except) {
+
+            } catch (AWTException e) {
+
+                LOG.error("Encountered an AWT exception", e);
                 app.close();
             }
         }
+    }
+
+    public void updateDisplay(String minutes) {
+
+        trayDigits.setText(minutes);
+
+        /* rebuild image */
+        SwingFXUtils.fromFXImage(trayScene.snapshot(wim), buffTrayIcon);
+
+        /* awt update trayIcon */
+        trayIcon.setImage(buffTrayIcon);
     }
 }
