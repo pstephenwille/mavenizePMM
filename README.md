@@ -1,8 +1,6 @@
-mavenizePMM
+pomodoro-blink1-tool
 ===========
 
-mavenize JavaFX PomodorroMM app
------------------------
 
 This is a desktop pomodoro (time management) application that interacts with the [blink1-tool](http://buy.thingm.com/blink1).
 
